@@ -119,64 +119,61 @@ def create_app(test_config=None):
     #**********************CREATE QUESTION********************
     
     
-  @app.route('/questions', methods=['POST'])
-  def post_question():
+  @app.route("/questions", methods=['POST'])
+  def add_question():
+      if request.data:
+          new_question_data = json.loads(request.data.decode('utf-8'))
+          if (('question' in new_question_data
+                and 'answer' in new_question_data)
+                  and ('difficulty' in new_question_data
+                        and 'category' in new_question_data)):
+              new_question = Question(
+                  question=new_question_data['question'],
+                  answer=new_question_data['answer'],
+                  difficulty=new_question_data['difficulty'],
+                  category=new_question_data['category']
+              )
+              Question.insert(new_question)
+              result = {
+                  "success": True,
+              }
+              return jsonify(result)
+          abort(404)
+      abort(422)
 
-    # load user input 
-    body = request.get_json()
 
-    # if search term is present
-    if body.get('searchTerm'):
-        search_term = body.get('searchTerm')
+    #**********************SEARCH FOR QUESTION********************
 
-        # query the database using search term
-        selection = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
 
-        # if no result found return 404 error
-        if len(selection) == 0:
-            abort(404)
 
-        # paginate results
-        paginated = paginate(request, selection)
+  @app.route("/searchQuestions", methods=['POST'])
+  def search_questions():
+      if request.data:
+          page = 1
+          if request.args.get('page'):
+              page = int(request.args.get('page'))
+          search_data = json.loads(request.data.decode('utf-8'))
+          if 'searchTerm' in search_data:
+              questions_query = Question.query.filter(
+                  Question.question.like(
+                      '%' +
+                      search_data['searchTerm'] +
+                      '%')).paginate(
+                  page,
+                  QUESTIONS_PER_PAGE,
+                  False)
+              questions = list(map(Question.format, questions_query.items))
+              if len(questions) > 0:
+                  result = {
+                      "success": True,
+                      "questions": questions,
+                      "total_questions": questions_query.total,
+                      "current_category": None,
+                  }
+                  return jsonify(result)
+          abort(404)
+      abort(422)
 
-        # return results
-        return jsonify({
-            'success': True,
-            'questions': paginated,
-            'total_questions': len(Question.query.all())
-        })
-    
-    else:
-
-        # ensure all fields have data
-        if (new_question is None) or (new_answer is None) or (new_difficulty is None) or (new_category is None):
-            abort(422)
-
-        try:
-            # create new question
-            question = Question(question=body.get('question'), 
-                                answer=body.get('answer'),
-                                difficulty=body.get('difficulty'),
-                                category=body.get('category')
-                                )
-            
-            #insert, paginate, and get total
-            question.insert()
-            selection = Question.query.order_by(Question.id).all()
-            current_questions = paginate_questions(request, selection)
-            total = len(Question.query.all())
-
-            # return data to view
-            return jsonify({
-                'success': True,
-                'created': question.id,
-                'question_created': question.question,
-                'questions': current_questions,
-                'total_questions': total
-            })
-
-        except:
-            abort(422)
 
     
     #**********************GET QUESTIONS FROM SPECIFIC CATEGORY********************
