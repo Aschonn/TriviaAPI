@@ -69,7 +69,7 @@ One note before you delve into your tasks: for each endpoint you are expected to
 ## API ENDPOINT EXPLANATION
 
 
-GET '/categories'
+### GET '/categories'
 
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
@@ -91,7 +91,7 @@ Example:
 }
 ```
 
-GET '/questions'
+### GET '/questions'
 
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Fetches a dictionary of questions in which the keys are the answer, category, difficulty, id and question.
@@ -138,7 +138,7 @@ Example:
 }
 ```
 
-DELETE '/questions/<question_id>'
+### DELETE '/questions/<question_id>'
 
 - Delete question from the question list
 - Request Arguments: question_id
@@ -152,7 +152,7 @@ Example:
 }
 ```
 
-POST '/questions'
+### POST '/questions'
 - checks if there is a duplicate and if not create question
 - Request questions, answers, difficulty, and category
 - return True if successful
@@ -164,7 +164,7 @@ Example
 }
 ```
 
-POST '/searchQuestions'
+### POST '/searchQuestions'
 
 - Searches for the questions
 - Request Arguments: Page Number
@@ -211,7 +211,7 @@ Example:
 ```
 
 
-GET /categories/<int:category_id>/questions
+### GET /categories/<int:category_id>/questions
 
 - To get questions based on category
 - Request Arguments: Category Id and Page Number.
@@ -229,7 +229,7 @@ Example:
 ```
 
 
-POST '/quizzes'
+### POST '/quizzes'
 
 - To get questions to play the quiz.
 - Request Body: quiz_category and previous_questions.
