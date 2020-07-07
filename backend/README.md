@@ -99,6 +99,7 @@ GET '/questions'
 - Returns: list of questions, total number of questions, current category, and categories.
 
 Example:
+```bash
 {
   "categories": {
     "1": "Science", 
@@ -135,6 +136,7 @@ Example:
   "success": true, 
   "total_questions": 19
 }
+```
 
 DELETE '/questions/<question_id>'
 
@@ -142,22 +144,25 @@ DELETE '/questions/<question_id>'
 - Request Arguments: question_id
 - Returns: JSON response of Succes and id of deleted 
 
-Example 
+Example:
+```bash 
 {
     "success":true, 
     "deleted": id}
 }
+```
 
 POST '/questions'
 - checks if there is a duplicate and if not create question
 - Request questions, answers, difficulty, and category
 - return True if successful
 
+```bash
 Example 
 {
     "success":true
 }
-
+```
 
 POST '/searchQuestions'
 
@@ -166,7 +171,8 @@ POST '/searchQuestions'
 - Request Body: search_data
 - Returns: List of questions, number of total questions and current category.
 
-Example Request Payload 
+Example: 
+```bash
 {
     "searchTerm":"a"
 }   
@@ -202,7 +208,7 @@ Example Request Payload
         "success":true,
         "total_questions":23
 }
-
+```
 
 
 GET /categories/<int:category_id>/questions
@@ -211,6 +217,8 @@ GET /categories/<int:category_id>/questions
 - Request Arguments: Category Id and Page Number.
 - Returns: List of questions, number of total questions, current category and categories.
 
+Example:
+```bash
 {
   "categories":
   [{"id":1,"type":"Science"},{"id":2,"type":"Art"},{"id":3,"type":"Geography"},{"id":4,"type":"History"},{"id":5,"type":"Entertainment"},{"id":6,"type":"Sports"}],
@@ -218,9 +226,7 @@ GET /categories/<int:category_id>/questions
   "questions":[{"answer":"Lake Victoria","category":3,"difficulty":2,"id":13,"question":"What is the largest lake in Africa?"},{"answer":"The Palace of Versailles","category":3,"difficulty":3,"id":14,"question":"In which royal palace would you find the Hall of Mirrors?"},{"answer":"Agra","category":3,"difficulty":2,"id":15,"question":"The Taj Mahal is located in which Indian city?"}],"success":true,
   "total_questions":3
 }
-
-
-
+```
 
 
 POST '/quizzes'
@@ -231,7 +237,8 @@ POST '/quizzes'
 
 Example Request Payload {"previous_questions":[],"quiz_category":{"type":"Science","id":1}}
 
-Example 
+Example:
+```bash 
 {
     
     "question": {
@@ -243,9 +250,7 @@ Example
     },
     "success":true
 }
-
-
-
+```
 
 
 ## Testing
