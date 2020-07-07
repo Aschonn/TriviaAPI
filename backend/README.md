@@ -220,10 +220,20 @@ Example:
 Example:
 ```bash
 {
-  "categories":
-  [{"id":1,"type":"Science"},{"id":2,"type":"Art"},{"id":3,"type":"Geography"},{"id":4,"type":"History"},{"id":5,"type":"Entertainment"},{"id":6,"type":"Sports"}],
+  "categories":[
+    {"id":1,"type":"Science"},
+    {"id":2,"type":"Art"},
+    {"id":3,"type":"Geography"},
+    {"id":4,"type":"History"},
+    {"id":5,"type":"Entertainment"},
+    {"id":6,"type":"Sports"}],
   "current_category":{"id":3,"type":"Geography"},
-  "questions":[{"answer":"Lake Victoria","category":3,"difficulty":2,"id":13,"question":"What is the largest lake in Africa?"},{"answer":"The Palace of Versailles","category":3,"difficulty":3,"id":14,"question":"In which royal palace would you find the Hall of Mirrors?"},{"answer":"Agra","category":3,"difficulty":2,"id":15,"question":"The Taj Mahal is located in which Indian city?"}],"success":true,
+  "questions":[
+    {"answer":"Lake Victoria","category":3,"difficulty":2,"id":13,"question":"What is the largest lake in Africa?"},
+    {"answer":"The Palace of Versailles","category":3,"difficulty":3,"id":14,"question":"In which royal palace would you find the Hall of Mirrors?"},
+    {"answer":"Agra","category":3,"difficulty":2,"id":15,"question":"The Taj Mahal is located in which Indian city?"}
+    ],
+  "success":true,
   "total_questions":3
 }
 ```
