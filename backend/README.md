@@ -75,7 +75,10 @@ GET '/categories'
 - Request Arguments: None
 - Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
 
-Example:  {
+Example:  
+
+```bash
+{
   "categories": {
     "1": "Science", 
     "2": "Art", 
@@ -86,6 +89,7 @@ Example:  {
   }, 
   "success": true
 }
+```
 
 GET '/questions'
 
