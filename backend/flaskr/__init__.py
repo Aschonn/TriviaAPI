@@ -241,7 +241,7 @@ def create_app(test_config=None):
 
     #get random question
     def get_random_question():
-        return questions[random.randrange(0, total), 1)]
+        return questions[random.randrange(0, total, 1)]
 
     #cheks if question has been used
     def check_if_used(question):
