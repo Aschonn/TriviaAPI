@@ -5,16 +5,14 @@ import json
 
 
 
-database_name = "trivia_test"
-database_path = "postgres://{}:{}@{}/{}".format(
-    'postgres', '091297', 'localhost:5432', database_name)
+database_path = "postgres://aschonn:091297@localhost:5432/trivia_test"
 db = SQLAlchemy()
 
 '''
 setup_db(app)
     binds a flask application and a SQLAlchemy service
 '''
-def setup_db(app, database_path=database_path):
+def setup_db(app, database_path = database_path):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app

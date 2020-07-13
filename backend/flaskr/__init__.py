@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, abort, jsonify
+from sqlalchemy.sql.expression import func, select
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
@@ -8,9 +9,10 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+
 #**********************pagination function********************
 
-def paginate(request, selection):
+def paginate(request, selection, QUESTIONS_PER_PAGE):
   page = request.args.get('page', 1, type=int)
   start = (page - 1) * QUESTIONS_PER_PAGE
   end = start + QUESTIONS_PER_PAGE
@@ -20,277 +22,287 @@ def paginate(request, selection):
 
   return current_questions
 
-
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
   setup_db(app)
+  
+  '''@TODO: Set up CORS. Allow '*' for origins.'''
 
-  # set up CORS, allowing all origins
-  CORS(app, resources={'/': {'origins': '*'}})
+  CORS(app, resources={'/': {"origins": "*"}})
+
+  '''@TODO: Use the after_request decorator to set Access-Control-Allow'''
 
   @app.after_request
   def after_request(response):
-      response.headers.add('Access-Control-Allow-Headers','Content-Type,Authorization,true')
-      response.headers.add('Access-Control-Allow-Methods','GET,PUT,POST,DELETE,OPTIONS')
-      return response
-
-#**********************GET CATEGORY********************
+    """ Set Access Control """
+    response.headers.add('Access-Control-Allow-Headers','Content-Type, Authorization, true')
+    response.headers.add('Access-Control-Allow-Methods','GET, POST, PATCH, DELETE, OPTIONS')
+    return response
 
   @app.route('/categories')
-  def get_categories():
+  def get_all_categories():
 
 
-    # get all categories
-    categories = Category.query.all()
-    
-    #dict is unchangable, unordered, and indexed
-    categories_dict = {}
-    
-    #iterate through and put the category type as the id
-    for category in categories:
-        categories_dict[category.id] = category.type
+    try:
+      #grab all avaiable categories
+      categories = Category.query.all()
+      
+      #format to match front end
+      categories_dictionary={}
+      
+      #iterate through all categories puts them in a dict
+      for category in categories:
+        categories_dictionary[category.id]=category.type
 
-    # if none or 0 abort
-    if categories_dict == None or len(categories_dict) == 0:
-        abort(404)
+      #return success response
+      return jsonify({
+        'success':True,
+        'categories':categories_dictionary
+      }),200
 
-    return jsonify({
-        'success': True,
-        'categories': categories_dict
-    })
-
-#**********************GET QUESTION********************
+    except Exception:
+      abort(500)
 
   @app.route('/questions')
   def get_questions():
 
-    # get all questions, paginate,  and total
-    selection = Question.query.all()
-    current_questions = paginate(request, selection)
-    total = len(selection)
+      # get paginated questions and categories
+      questions = Question.query.order_by(Question.id).all()
+      total_questions = len(questions)
+      categories = Category.query.order_by(Category.id).all()
 
-    # get all categories and add to dict
-    categories = Category.query.all()
-    categories_dict = {}
-    
-    
-    #iterate through and put the category type as the id
-    for category in categories:
-        categories_dict[category.id] = category.type
-
-        
-    if len(current_questions) == 0:
+      # Get paginated questions
+      current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
+      
+      # return 404 if there are no questions for the page number
+      if (len(current_questions) == 0):
         abort(404)
 
-    return jsonify({
+      #format to match front end
+      categories_dictionary = {}
+      for category in categories:
+        categories_dictionary[category.id] = category.type
+
+      # return values if there are no errors
+      return jsonify({
         'success': True,
-        'questions': current_questions,
-        'total_questions': total,
-        'categories': categories_dict
-    })
-
-    
-      
-#**********************DELETE QUESTION********************
-
+        'total_questions': total_questions,
+        'categories': categories_dictionary,
+        'questions': current_questions
+      }), 200
 
 
   @app.route('/questions/<int:id>', methods=['DELETE'])
   def delete_question(id):
 
-      try:
-        question = Question.query.filter_by(id=id).one_or_none()
+    try:
+      #grab all questions
+      question = Question.query.get(id)      
 
-        if question is None:
-            abort(404)
 
-        question.delete()
-
-        return jsonify({
-            'success': True,
-            'deleted': id
-        })
-
-      except:
+      #if no questions abort 422
+      if question is None:
         abort(422)
+      
+      #else delete
+      else:
+        question.delete()
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate(request, selection,QUESTIONS_PER_PAGE)
 
-    
-    #**********************CREATE QUESTION********************
-    
-    
-  @app.route("/questions", methods=['POST'])
-  def add_question():
-      if request.data:
-          new_question_data = json.loads(request.data.decode('utf-8'))
-          if (('question' in new_question_data
-                and 'answer' in new_question_data)
-                  and ('difficulty' in new_question_data
-                        and 'category' in new_question_data)):
-              new_question = Question(
-                  question=new_question_data['question'],
-                  answer=new_question_data['answer'],
-                  difficulty=new_question_data['difficulty'],
-                  category=new_question_data['category']
-              )
-              Question.insert(new_question)
-              result = {
-                  "success": True,
-              }
-              return jsonify(result)
-          abort(404)
+      #json 
+      return jsonify({
+        'success': True,
+        'message': "Question successfully deleted",
+        'deleted': id,
+        'questions': current_questions,
+        'total_questions': len(Question.query.all())
+        }), 200
+
+    except Exception:
       abort(422)
 
 
-    #**********************SEARCH FOR QUESTION********************
+  @app.route('/questions', methods=['POST'])
+  def create_question():
 
-
-
-  @app.route("/searchQuestions", methods=['POST'])
+    # Get json data from request
+    data = request.get_json()
+    
+    # get individual data from json data
+    new_question = data.get('question', '')
+    new_answer = data.get('answer', '')
+    new_difficulty = data.get('difficulty', '')
+    new_category = data.get('category', '')
+     
+    # If no data appears abort 422
+    if ((new_question == '') or (new_answer == '') or (new_difficulty == '') or (new_category == '')):
+      abort(422)
+    
+    try:
+      # Create a new question instance
+      question_record = Question(question=new_question,answer=new_answer,category=new_category,difficulty=new_difficulty)
+      
+      # save question
+      question_record.insert()
+       
+      # return success message
+      return jsonify({
+        'status_code':200,
+        'success': True,
+        'message': 'Question successfully created!'
+      })
+      
+    except Exception:
+      # return 422 status code if error
+      
+      print("Error is here")
+      print("exception",sys.exc_info())
+      abort(422)
+      
+  @app.route('/questions/search', methods=['POST'])
   def search_questions():
-      if request.data:
-          page = 1
-          if request.args.get('page'):
-              page = int(request.args.get('page'))
-          search_data = json.loads(request.data.decode('utf-8'))
-          if 'searchTerm' in search_data:
-              questions_query = Question.query.filter(
-                  Question.question.like(
-                      '%' +
-                      search_data['searchTerm'] +
-                      '%')).paginate(
-                  page,
-                  QUESTIONS_PER_PAGE,
-                  False)
-              questions = list(map(Question.format, questions_query.items))
-              if len(questions) > 0:
-                  result = {
-                      "success": True,
-                      "questions": questions,
-                      "total_questions": questions_query.total,
-                      "current_category": None,
-                  }
-                  return jsonify(result)
-          abort(404)
+
+    # Get search term from request data
+    data = request.get_json()
+    search_term = data.get('searchTerm', '')
+    # Return 422 status code if empty search term is sent
+    if search_term == '':
       abort(422)
+    try:
+      # get all questions that has the search term substring
+      questions = Question.query.filter(Question.question.ilike(f'%{search_term}%')).all()
 
+      # if there are no questions for search term return 404
+      if len(questions) == 0:
+        abort(404)
 
-    
-    #**********************GET QUESTIONS FROM SPECIFIC CATEGORY********************
-    
+      # paginate questions
+      paginated_question = paginate(request, questions,QUESTIONS_PER_PAGE)
+      # return response if successful
+      return jsonify({
+        'success': True,
+        'questions': paginated_question,
+        'total_questions': len(Question.query.all())
+      }), 200
+
+    except Exception:
+      # This error code is returned when 404 abort
+      # raises exception from try block
+      abort(404)
+
   @app.route('/categories/<int:id>/questions')
   def get_questions_by_category(id):
+    """This endpoint handles getting questions by category"""
 
-      # get the category by id and total
-      category = Category.query.filter_by(id=id).one_or_none()
-      total = len(Question.query.all())
+    # get the category by id
+    category = Category.query.filter_by(id=id).one_or_none()
 
-      # abort 400 for bad request 
-      if not category:
-          abort(400)
+    # abort 400 for bad request if category isn't found
+    if (category is None):
+      abort(422)
 
-      # get the matching questions
-      selection = Question.query.filter_by(category=category.id).all()
+    questions = Question.query.filter_by(category=id).all()
+    # paginate questions
+    paginated_question = paginate(request, questions,QUESTIONS_PER_PAGE)
 
-      # paginate the selection
-      paginated = paginate(request, selection)
+    # return the results
+    return jsonify({
+      'success': True,
+      'questions': paginated_question,
+      'total_questions': len(questions),
+      'current_category': category.type
+    })
 
-      # return the results
-      return jsonify({
-          'success': True,
-          'questions': paginated,
-          'total_questions': total,
-          'current_category': category.type
-      })
+  @app.route("/quizzes",methods=["POST"])
+  def get_quiz_questions():
 
-    
-    #**********************QUIZZES********************
-    
-  @app.route('/quizzes', methods=['POST'])
-  def get_random_quiz_question():
+    #get data
+    body = request.get_json()
 
-      # load the request body, get previous questions, get the category, and total
-      body = request.get_json()
-      previous = body.get('previous_questions')
-      category = body.get('quiz_category')
-      total = len(questions)
+    #get previous and category
+    previous = body.get('previous_questions')
+    category = body.get('quiz_category')
 
-      if category is None or previous is None:
-          abort(400)
+    #abort 400 if category or previous is None
+    if category is None or previous is None:
+        abort(400)
 
-      if category['id'] == 0:
-          questions = Question.query.all()
-      else:
-          questions = Question.query.filter_by(category=category['id']).all()
+    #will go into all category 
+    if (category['id'] == 0):
+        questions = Question.query.all()
+    else:
+    #go into specific category
+        questions = Question.query.filter_by(category=category['id']).all()
 
-      # picks a random question
-      def get_random_question():
-          return questions[random.randrange(0, len(questions), 1)]
+    #total questions
+    total = len(questions)
 
-      # get random question
-      question = get_random_question()
+    #get random question
+    def get_random_question():
+        return questions[random.randrange(0, total), 1)]
 
-      # checks to see if question has already been used
-      def check_if_used(question):
-          used = False
-          for item in previous:
-              if (item == question.id):
-                  used = True
+    #cheks if question has been used
+    def check_if_used(question):
+        used = False
+        for x in previous:
+            if (x == question.id):
+                used = True
 
-          return used
+        return used
+
+    question = get_random_question()
+
+    while (check_if_used(question)):
+        question = get_random_question()
+
+        if (len(previous) == total):
+            return jsonify({
+                'success': True
+            })
+
+    return jsonify({
+        'success': True,
+        'question': question.format()
+    })
 
 
-
-      # check if used, execute until unused question found
-      while check_if_used(question):
-          question = get_random_question()
-
-          # if all questions have been tried, return without question
-          # necessary if category has <5 questions
-          if len(previous) == total:
-              return jsonify({
-                  'success': True
-              })
-
-      # return the question
-      return jsonify({
-          'success': True,
-          'question': question.format()
-      })
-
-#**********************ERROR HANDLERS********************
-
+  # Error handler for Bad request error (400)
 
   @app.errorhandler(400)
   def bad_request(error):
     return jsonify({
-      "success": False,
-      "error": 400,
-      "message": "bad request"
+      'success': False,
+      'error': 400,
+      'message': 'Bad request error'
     }), 400
-    
+
+  # Error handler for resource not found (404)
   @app.errorhandler(404)
   def not_found(error):
     return jsonify({
-      "success": False,
-      "error": 404,
-      "message": "resource not found"
+      'success': False,
+      'error': 404,
+      'message': 'Resource not found'
     }), 404
 
-  @app.errorhandler(422)
-  def unprocessable(error):
-    return jsonify({
-      "success": False,
-      "error": 422,
-      "message": "unprocessable"
-    }), 422
-
+  # Error handler for internal server error (500)
   @app.errorhandler(500)
-  def internal_service_error(error):
+  def internal_server_error(error):
     return jsonify({
-      "success": False,
-      "error": 500,
-      "message": "Internal Service Error"
+      'success': False,
+      'error': 500,
+      'message': 'An error has occured, please try again'
     }), 500
+
+  # Error handler for unprocesable entity (422)
+  @app.errorhandler(422)
+  def unprocesable_entity(error):
+    return jsonify({
+      'success': False,
+      'error': 422,
+      'message': 'Unprocessable entity'
+    }), 422
 
   return app
