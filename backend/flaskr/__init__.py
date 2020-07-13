@@ -22,6 +22,8 @@ def paginate(request, selection, QUESTIONS_PER_PAGE):
 
   return current_questions
 
+#**********************Create app function********************
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
@@ -40,58 +42,63 @@ def create_app(test_config=None):
     response.headers.add('Access-Control-Allow-Methods','GET, POST, PATCH, DELETE, OPTIONS')
     return response
 
+#**********************get categories********************
+
   @app.route('/categories')
   def get_all_categories():
 
-
-    try:
       #grab all avaiable categories
       categories = Category.query.all()
       
       #format to match front end
-      categories_dictionary={}
+      categories_dict={}
       
       #iterate through all categories puts them in a dict
       for category in categories:
-        categories_dictionary[category.id]=category.type
+        categories_dict[category.id]=category.type
+
+      if categories_dict == None or len(categories_dict) == 0:
+        abort(404)
 
       #return success response
       return jsonify({
         'success':True,
-        'categories':categories_dictionary
+        'categories':categories_dict
       }),200
 
-    except Exception:
-      abort(500)
+
+#**********************get questions********************
 
   @app.route('/questions')
   def get_questions():
 
-      # get paginated questions and categories
-      questions = Question.query.order_by(Question.id).all()
-      total_questions = len(questions)
-      categories = Category.query.order_by(Category.id).all()
-
-      # Get paginated questions
-      current_questions = paginate(request, questions, QUESTIONS_PER_PAGE)
+      # get all questions, paginated, and categories
+      selection = Question.query.order_by(Question.id).all()
+      current_questions = paginate(request, selection, QUESTIONS_PER_PAGE)
+      total_questions = len(selection)
       
+      #get all cat
+      categories = Category.query.order_by(Category.id).all()
+      categories_dict = {}
+  
+      #format to match front end
+      for category in categories:
+        categories_dict[category.id] = category.type
+
+
       # return 404 if there are no questions for the page number
       if (len(current_questions) == 0):
         abort(404)
 
-      #format to match front end
-      categories_dictionary = {}
-      for category in categories:
-        categories_dictionary[category.id] = category.type
-
       # return values if there are no errors
       return jsonify({
         'success': True,
+        'questions': current_questions,
         'total_questions': total_questions,
-        'categories': categories_dictionary,
-        'questions': current_questions
+        'categories': categories_dict
       }), 200
 
+#**********************Delete Question********************
 
   @app.route('/questions/<int:id>', methods=['DELETE'])
   def delete_question(id):
@@ -114,15 +121,13 @@ def create_app(test_config=None):
       #json 
       return jsonify({
         'success': True,
-        'message': "Question successfully deleted",
         'deleted': id,
-        'questions': current_questions,
-        'total_questions': len(Question.query.all())
         }), 200
 
     except Exception:
       abort(422)
 
+#**********************Post Question********************
 
   @app.route('/questions', methods=['POST'])
   def create_question():
@@ -160,6 +165,8 @@ def create_app(test_config=None):
       print("Error is here")
       print("exception",sys.exc_info())
       abort(422)
+
+  #**********************Post Questions********************
       
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
@@ -192,6 +199,9 @@ def create_app(test_config=None):
       # raises exception from try block
       abort(404)
 
+  
+  #**********************Get question by category********************    
+
   @app.route('/categories/<int:id>/questions')
   def get_questions_by_category(id):
     """This endpoint handles getting questions by category"""
@@ -214,6 +224,8 @@ def create_app(test_config=None):
       'total_questions': len(questions),
       'current_category': category.type
     })
+
+#**********************Quizzes********************
 
   @app.route("/quizzes",methods=["POST"])
   def get_quiz_questions():
@@ -268,7 +280,7 @@ def create_app(test_config=None):
     })
 
 
-  # Error handler for Bad request error (400)
+#**********************ERRORS********************
 
   @app.errorhandler(400)
   def bad_request(error):
@@ -278,7 +290,7 @@ def create_app(test_config=None):
       'message': 'Bad request error'
     }), 400
 
-  # Error handler for resource not found (404)
+
   @app.errorhandler(404)
   def not_found(error):
     return jsonify({
@@ -287,7 +299,7 @@ def create_app(test_config=None):
       'message': 'Resource not found'
     }), 404
 
-  # Error handler for internal server error (500)
+
   @app.errorhandler(500)
   def internal_server_error(error):
     return jsonify({
@@ -296,7 +308,7 @@ def create_app(test_config=None):
       'message': 'An error has occured, please try again'
     }), 500
 
-  # Error handler for unprocesable entity (422)
+
   @app.errorhandler(422)
   def unprocesable_entity(error):
     return jsonify({
