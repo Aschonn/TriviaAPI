@@ -1,27 +1,3 @@
-# import os #allows us to use different operating systems
-# import unittest #provides tools for constructing and running tests
-# import json
-# from flask_sqlalchemy import SQLAlchemy
-# from flaskr import create_app
-# from models import setup_db, Question, Category
-
-
-# class TriviaTestCase(unittest.TestCase):
-#     """This class represents the trivia test case"""
-
-#     def setUp(self):
-#         """Define test variables and initialize app."""
-#         self.app = create_app()
-#         self.client = self.app.test_client
-#         self.database_path = "postgresql://aschonn:091297@localhost:5432/trivia_test"
-#         self.question = {
-#             'question': 'Why Giannis Antetokounmpo is going to the the goat ?',
-#             'answer': 'In short he is michael jordan mentality mixed with a 2k 99 overall',
-#             'difficulty': 5,
-#             'category': '3'
-#         }
-#         setup_db(self.app, self.database_path)
-
 import os
 import unittest
 import json
