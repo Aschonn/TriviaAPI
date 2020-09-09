@@ -17,7 +17,7 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "trivia_test"
+        self.database_name = "trivia"
         self.database_path = "postgresql://{}:{}@{}/{}".format('postgres', '091297', 'localhost:5432', self.database_name)
         self.question = {
             'question': 'Why Giannis Antetokounmpo is going to the the goat ? ',

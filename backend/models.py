@@ -5,7 +5,7 @@ import json
 
 
 
-database_path = "postgres://aschonn:091297@localhost:5432/trivia_test"
+database_path = "postgres://aschonn:091297@localhost:5432/trivia"
 db = SQLAlchemy()
 
 '''
